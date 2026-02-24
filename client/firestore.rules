@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // NOTE: Admin accounts must be provisioned manually.
+    // Create a Firebase Auth user, then create Firestore doc users/{uid} with role = "admin" from console.
+    function isAdmin() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    // User role/profile doc: users/{uid}
+    // SECURITY NOTES:
+    // - Clients may ONLY create their own user doc as role == "user".
+    // - Normal users may update ONLY their own non-role fields.
+    // - Only admins may change roles or read all users.
+    match /users/{uid} {
+      allow create: if isSelf(uid)
+        && request.resource.data.role == "user";
+
+      allow read: if isSelf(uid) || isAdmin();
+
+      // Self-update is allowed ONLY if role isn't changed.
+      // Admins can update any user (including role changes).
+      allow update: if (isSelf(uid) && request.resource.data.role == resource.data.role)
+        || isAdmin();
+
+      allow delete: if false;
+    }
+
+    // Role upgrade requests created by users and reviewed by admins
+    match /role_requests/{requestId} {
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == "pending"
+        && (request.resource.data.requestedRole == "doctor" || request.resource.data.requestedRole == "pharmacy");
+
+      // Users can read their own requests; admins can read all
+      allow read: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
+
+      // Only admins can approve/reject
+      allow update: if isAdmin();
+
+      allow delete: if false;
+    }
+
+    // Deny everything else by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

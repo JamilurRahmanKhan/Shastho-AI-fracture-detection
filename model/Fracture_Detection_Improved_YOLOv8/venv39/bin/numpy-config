@@ -1,0 +1,8 @@
+#!/bin/sh
+'''exec' "/Applications/XAMPP/xamppfiles/htdocs/FYDP/full project/ShasthoAI_Fixed_Source_Only 4/model/Fracture_Detection_Improved_YOLOv8/venv39/bin/python" "$0" "$@"
+' '''
+import sys
+from numpy._configtool import main
+if __name__ == '__main__':
+    sys.argv[0] = sys.argv[0].removesuffix('.exe')
+    sys.exit(main())

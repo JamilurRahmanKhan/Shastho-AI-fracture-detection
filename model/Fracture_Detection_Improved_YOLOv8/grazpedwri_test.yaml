@@ -1,0 +1,8 @@
+﻿path: X:/02012026 - FYDP/datasets/data
+
+train: images/train
+val: images/test
+
+nc: 1
+names:
+  - fracture

@@ -1,0 +1,7 @@
+train: X:/02012026 - FYDP/datasets/data/images/train
+val: X:/02012026 - FYDP/datasets/data/images/valid
+test: X:/02012026 - FYDP/datasets/data/images/test
+
+nc: 1
+names:
+  - fracture
