@@ -345,7 +345,9 @@ router.patch('/:id/decision', requireFirebaseAuth, requireRole(['doctor']), asyn
 
     if (action === 'accept') {
       // Re-validate slot at acceptance time to avoid conflicts/time-off issues.
-      const slotCheck = await validateDoctorSlot({ doctorUid: doc.doctorUid, startAt: doc.datetime });
+      // IMPORTANT: ignore the appointment being accepted itself, otherwise the
+      // overlap check will always find this pending record and falsely block acceptance.
+      const slotCheck = await validateDoctorSlot({ doctorUid: doc.doctorUid, startAt: doc.datetime, ignoreAppointmentId: doc._id });
       if (!slotCheck.ok) {
         return res.status(slotCheck.status || 409).json({ error: slotCheck.error || 'Doctor is not available at this time.' });
       }
@@ -458,7 +460,8 @@ router.patch('/:id', requireFirebaseAuth, requireRole(['user']), async (req, res
   }
   if (req.body?.status !== undefined) {
     const next = safeStr(req.body.status).trim().toLowerCase();
-    if (next !== 'cancelled') {
+    // Be tolerant to US spelling from any clients ("canceled").
+    if (next !== 'cancelled' && next !== 'canceled') {
       return res.status(400).json({ error: 'Patients can only cancel an appointment request.' });
     }
     up.status = 'cancelled';
