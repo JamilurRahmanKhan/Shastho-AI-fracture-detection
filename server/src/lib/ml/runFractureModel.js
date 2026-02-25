@@ -150,10 +150,18 @@ function ensureLocalFile(input) {
   // Case 1: input is already a string path
   if (typeof input === "string") return { filePath: input, cleanup: null };
 
-  // Case 2: multer-style object with path
   if (input && typeof input === "object") {
+    // ✅ NEW: support objects like { imagePath: "..." }
+    if (typeof input.imagePath === "string") return { filePath: input.imagePath, cleanup: null };
+
+    // Existing support
     if (typeof input.path === "string") return { filePath: input.path, cleanup: null };
     if (typeof input.filepath === "string") return { filePath: input.filepath, cleanup: null };
+
+    // Optional: if someday you pass a URL
+    if (typeof input.imageUrl === "string") {
+      throw new Error("Got imageUrl. Downloading URLs is not implemented yet.");
+    }
 
     // Case 3: memory upload: { buffer: <Buffer>, originalname?: "x.jpg" }
     if (Buffer.isBuffer(input.buffer)) {
