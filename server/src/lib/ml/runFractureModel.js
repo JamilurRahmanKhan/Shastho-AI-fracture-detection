@@ -140,22 +140,37 @@
 
 
 import fs from "fs";
+import os from "os";
+import path from "path";
 import FormData from "form-data";
 
 const MODEL_API_URL = process.env.MODEL_API_URL;
 
-function normalizeImagePath(input) {
-  // Case 1: string path
-  if (typeof input === "string") return input;
+function ensureLocalFile(input) {
+  // Case 1: input is already a string path
+  if (typeof input === "string") return { filePath: input, cleanup: null };
 
-  // Case 2: multer file object or similar: { path, filename, ... }
+  // Case 2: multer-style object with path
   if (input && typeof input === "object") {
-    if (typeof input.path === "string") return input.path;
-    if (typeof input.filepath === "string") return input.filepath; // sometimes used by other libs
+    if (typeof input.path === "string") return { filePath: input.path, cleanup: null };
+    if (typeof input.filepath === "string") return { filePath: input.filepath, cleanup: null };
+
+    // Case 3: memory upload: { buffer: <Buffer>, originalname?: "x.jpg" }
+    if (Buffer.isBuffer(input.buffer)) {
+      const ext = input.originalname ? path.extname(input.originalname) : ".jpg";
+      const tmpPath = path.join(os.tmpdir(), `xray_${Date.now()}${ext || ".jpg"}`);
+      fs.writeFileSync(tmpPath, input.buffer);
+      return {
+        filePath: tmpPath,
+        cleanup: () => {
+          try { fs.unlinkSync(tmpPath); } catch {}
+        },
+      };
+    }
   }
 
   throw new Error(
-    `runFractureModel expected a file path string or an object with {path}. Got: ${typeof input}`
+    `runFractureModel expected a file path string, {path}, or {buffer}. Got: ${JSON.stringify(Object.keys(input || {}))}`
   );
 }
 
@@ -164,32 +179,30 @@ export async function runFractureModel(imageInput) {
     throw new Error("MODEL_API_URL is not set in backend environment variables.");
   }
 
-  const imagePath = normalizeImagePath(imageInput);
+  const { filePath, cleanup } = ensureLocalFile(imageInput);
 
-  const form = new FormData();
-  form.append("file", fs.createReadStream(imagePath));
+  try {
+    const form = new FormData();
+    form.append("file", fs.createReadStream(filePath));
 
-  const res = await fetch(`${MODEL_API_URL}/infer`, {
-    method: "POST",
-    body: form,
-    headers: form.getHeaders(),
-  });
+    const res = await fetch(`${MODEL_API_URL}/infer`, {
+      method: "POST",
+      body: form,
+      headers: form.getHeaders(),
+    });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Model API error ${res.status}: ${text}`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Model API error ${res.status}: ${text}`);
+    }
+
+    const data = await res.json();
+    const boxes = data.boxes || [];
+    const fractureDetected = boxes.length > 0;
+    const probability = fractureDetected ? Math.max(...boxes.map((b) => b.conf ?? 0)) : 0;
+
+    return { ok: true, fractureDetected, probability, boxes };
+  } finally {
+    if (cleanup) cleanup();
   }
-
-  const data = await res.json();
-
-  const boxes = data.boxes || [];
-  const fractureDetected = boxes.length > 0;
-  const probability = fractureDetected ? Math.max(...boxes.map((b) => b.conf ?? 0)) : 0;
-
-  return {
-    ok: true,
-    fractureDetected,
-    probability,
-    boxes,
-  };
 }
