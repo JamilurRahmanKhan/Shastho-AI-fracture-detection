@@ -142,50 +142,34 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
+import axios from "axios";
 import FormData from "form-data";
 
 const MODEL_API_URL = process.env.MODEL_API_URL;
 
 function ensureLocalFile(input) {
-  // Case 1: input is already a string path
   if (typeof input === "string") return { filePath: input, cleanup: null };
 
   if (input && typeof input === "object") {
-    // ✅ NEW: support objects like { imagePath: "..." }
     if (typeof input.imagePath === "string") return { filePath: input.imagePath, cleanup: null };
-
-    // Existing support
     if (typeof input.path === "string") return { filePath: input.path, cleanup: null };
     if (typeof input.filepath === "string") return { filePath: input.filepath, cleanup: null };
 
-    // Optional: if someday you pass a URL
-    if (typeof input.imageUrl === "string") {
-      throw new Error("Got imageUrl. Downloading URLs is not implemented yet.");
-    }
-
-    // Case 3: memory upload: { buffer: <Buffer>, originalname?: "x.jpg" }
     if (Buffer.isBuffer(input.buffer)) {
       const ext = input.originalname ? path.extname(input.originalname) : ".jpg";
       const tmpPath = path.join(os.tmpdir(), `xray_${Date.now()}${ext || ".jpg"}`);
       fs.writeFileSync(tmpPath, input.buffer);
-      return {
-        filePath: tmpPath,
-        cleanup: () => {
-          try { fs.unlinkSync(tmpPath); } catch {}
-        },
-      };
+      return { filePath: tmpPath, cleanup: () => { try { fs.unlinkSync(tmpPath); } catch {} } };
     }
   }
 
   throw new Error(
-    `runFractureModel expected a file path string, {path}, or {buffer}. Got: ${JSON.stringify(Object.keys(input || {}))}`
+    `runFractureModel expected a file path string, {imagePath}, {path}, or {buffer}. Got: ${JSON.stringify(Object.keys(input || {}))}`
   );
 }
 
 export async function runFractureModel(imageInput) {
-  if (!MODEL_API_URL) {
-    throw new Error("MODEL_API_URL is not set in backend environment variables.");
-  }
+  if (!MODEL_API_URL) throw new Error("MODEL_API_URL is not set in backend env vars.");
 
   const { filePath, cleanup } = ensureLocalFile(imageInput);
 
@@ -193,23 +177,23 @@ export async function runFractureModel(imageInput) {
     const form = new FormData();
     form.append("file", fs.createReadStream(filePath));
 
-    const res = await fetch(`${MODEL_API_URL}/infer`, {
-      method: "POST",
-      body: form,
+    const resp = await axios.post(`${MODEL_API_URL}/infer`, form, {
       headers: form.getHeaders(),
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
+      timeout: 120000,
     });
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Model API error ${res.status}: ${text}`);
-    }
-
-    const data = await res.json();
+    const data = resp.data || {};
     const boxes = data.boxes || [];
     const fractureDetected = boxes.length > 0;
     const probability = fractureDetected ? Math.max(...boxes.map((b) => b.conf ?? 0)) : 0;
 
     return { ok: true, fractureDetected, probability, boxes };
+  } catch (e) {
+    // show useful error text in your UI
+    const msg = e?.response?.data ? JSON.stringify(e.response.data) : (e.message || String(e));
+    throw new Error(`Model API error: ${msg}`);
   } finally {
     if (cleanup) cleanup();
   }
