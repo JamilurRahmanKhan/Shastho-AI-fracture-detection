@@ -10,6 +10,7 @@
 
 import React from "react";
 import { Plus, Minus, Trash2 } from "lucide-react";
+import { resolveApiUrl } from "@/lib/resolveApiUrl";
 
 // =============================================================================
 // CART ITEM COMPONENT
@@ -144,9 +145,9 @@ const CartItem = ({ item, onUpdateQuantity }) => {
       className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl border-2 border-blue-100 flex-shrink-0 overflow-hidden flex items-center justify-center shadow-sm"
       aria-label="Product image"
     >
-      {item.imageUrl ? (
+      {resolveApiUrl(item.imageUrl) ? (
         <img
-          src={item.imageUrl}
+          src={resolveApiUrl(item.imageUrl)}
           alt={item.name}
           className="w-full h-full object-cover"
           loading="lazy"

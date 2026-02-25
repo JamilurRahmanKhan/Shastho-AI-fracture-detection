@@ -10,6 +10,7 @@
 
 import React, { useState } from 'react';
 import { ZoomIn } from 'lucide-react';
+import { resolveApiUrl } from "@/lib/resolveApiUrl";
 
 /**
  * ProductImageGallery Component
@@ -23,7 +24,7 @@ const ProductImageGallery = ({ product }) => {
 
   // Use product image or placeholder
   const images = product?.imageUrl
-    ? [product.imageUrl]
+    ? [resolveApiUrl(product.imageUrl)]
     : ['https://images.unsplash.com/photo-1585435557343-3b092031d5ad?w=500'];
 
   return (

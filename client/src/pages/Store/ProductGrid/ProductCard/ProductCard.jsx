@@ -11,6 +11,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Star, Sparkles, ArrowRight } from 'lucide-react';
+import { resolveApiUrl } from "@/lib/resolveApiUrl";
 
 /**
  * ProductCard Component
@@ -81,9 +82,9 @@ const ProductCard = ({ medication, onAddToCart, currencySymbol: currencySymbolPr
     >
       {/* Product Image */}
       <div className="aspect-square bg-gradient-to-br from-slate-100 to-blue-50/30 relative overflow-hidden">
-        {medication.imageUrl ? (
+        {resolveApiUrl(medication.imageUrl) ? (
           <img
-            src={medication.imageUrl}
+            src={resolveApiUrl(medication.imageUrl)}
             alt={medication.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
