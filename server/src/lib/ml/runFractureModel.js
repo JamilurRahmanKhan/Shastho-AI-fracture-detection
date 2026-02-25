@@ -144,10 +144,27 @@ import FormData from "form-data";
 
 const MODEL_API_URL = process.env.MODEL_API_URL;
 
-export async function runFractureModel(imagePath) {
+function normalizeImagePath(input) {
+  // Case 1: string path
+  if (typeof input === "string") return input;
+
+  // Case 2: multer file object or similar: { path, filename, ... }
+  if (input && typeof input === "object") {
+    if (typeof input.path === "string") return input.path;
+    if (typeof input.filepath === "string") return input.filepath; // sometimes used by other libs
+  }
+
+  throw new Error(
+    `runFractureModel expected a file path string or an object with {path}. Got: ${typeof input}`
+  );
+}
+
+export async function runFractureModel(imageInput) {
   if (!MODEL_API_URL) {
     throw new Error("MODEL_API_URL is not set in backend environment variables.");
   }
+
+  const imagePath = normalizeImagePath(imageInput);
 
   const form = new FormData();
   form.append("file", fs.createReadStream(imagePath));
@@ -167,7 +184,7 @@ export async function runFractureModel(imagePath) {
 
   const boxes = data.boxes || [];
   const fractureDetected = boxes.length > 0;
-  const probability = fractureDetected ? Math.max(...boxes.map(b => b.conf ?? 0)) : 0;
+  const probability = fractureDetected ? Math.max(...boxes.map((b) => b.conf ?? 0)) : 0;
 
   return {
     ok: true,
