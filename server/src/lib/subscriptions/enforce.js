@@ -29,9 +29,18 @@ export const ACTIONS = {
   CHECKIN: 'CHECKIN',
 };
 
+// export function isSubscriptionsEnforced() {
+//   const v = String(process.env.SUBSCRIPTIONS_ENFORCE || '').trim().toLowerCase();
+//   return v === '1' || v === 'true' || v === 'yes';
+// }
+
 export function isSubscriptionsEnforced() {
+  // Default to ON so plan/trial limits behave as advertised.
+  // You can explicitly disable by setting SUBSCRIPTIONS_ENFORCE=0/false/no in the server environment.
   const v = String(process.env.SUBSCRIPTIONS_ENFORCE || '').trim().toLowerCase();
-  return v === '1' || v === 'true' || v === 'yes';
+  if (!v) return true;
+  if (v === '0' || v === 'false' || v === 'no' || v === 'off') return false;
+  return v === '1' || v === 'true' || v === 'yes' || v === 'on';
 }
 
 function isoWeekKey(now) {

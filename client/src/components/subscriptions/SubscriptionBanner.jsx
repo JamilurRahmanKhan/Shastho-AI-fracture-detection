@@ -38,9 +38,9 @@ export default function SubscriptionBanner({
   const timeLeft = formatTimeLeft(snapshot.endAt);
 
   const scansRem = getRemaining(snapshot, "scanCredits");
-  const pdfRem = getRemaining(snapshot, "pdfExports");
-  const shareRem = getRemaining(snapshot, "shareLinks");
-  const ctxChatRem = getRemaining(snapshot, "scanContextChat");
+  // const pdfRem = getRemaining(snapshot, "pdfExports");
+  // const shareRem = getRemaining(snapshot, "shareLinks");
+  // const ctxChatRem = getRemaining(snapshot, "scanContextChat");
   const genChatRem = getRemaining(snapshot, "generalChat");
 
   const titleIcon = isTrial ? <Gift className="w-5 h-5 text-blue-700" /> : isFree ? <Clock className="w-5 h-5 text-slate-700" /> : <Crown className="w-5 h-5 text-amber-600" />;
@@ -83,9 +83,9 @@ export default function SubscriptionBanner({
 
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Stat label="Scans left" value={scansRem == null ? "—" : scansRem} />
-        <Stat label="PDF exports" value={pdfRem == null ? "—" : pdfRem} />
-        <Stat label="Share links" value={shareRem == null ? "—" : shareRem} />
-        <Stat label="Scan chat" value={ctxChatRem == null ? "—" : ctxChatRem} />
+        {/* <Stat label="PDF exports" value={pdfRem == null ? "—" : pdfRem} /> */}
+        {/* <Stat label="Share links" value={shareRem == null ? "—" : shareRem} /> */}
+        {/* <Stat label="Scan chat" value={ctxChatRem == null ? "—" : ctxChatRem} /> */}
         <Stat label="General chat" value={genChatRem == null ? "—" : genChatRem} />
       </div>
     </div>

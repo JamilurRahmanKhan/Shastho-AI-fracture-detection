@@ -116,12 +116,12 @@ router.post('/trial/activate', requireFirebaseAuth, requireRole('user'), trialAc
     const now = new Date();
 
     // Verified user requirement: email_verified claim from Firebase.
-    const emailVerified = Boolean(req.user?.claims?.email_verified);
-    if (!emailVerified) {
-      return res.status(403).json({
-        error: 'Email not verified. Please verify your email before activating the free trial.',
-      });
-    }
+    // const emailVerified = Boolean(req.user?.claims?.email_verified);
+    // if (!emailVerified) {
+    //   return res.status(403).json({
+    //     error: 'Email not verified. Please verify your email before activating the free trial.',
+    //   });
+    // }
 
     // NO-SWITCHING (global per user): trial cannot be activated while any paid plan is active.
     // Also expire any ended subscriptions to keep state consistent.
