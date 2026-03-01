@@ -575,23 +575,7 @@ export default function PricingCards() {
             Choose a Plan That Matches Your Usage
           </h2>
 
-          <p className="text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed px-4">
-            These plans are generated from the backend subscription catalog, so the scan/chat/PDF limits you see here match the
-            actual enforcement rules.
-          </p>
-
-          <div className="mt-8 max-w-3xl mx-auto rounded-2xl border border-slate-200 bg-white/70 px-5 py-4 text-left shadow-sm">
-            <div className="flex items-start gap-3">
-              <ShieldCheck className="w-5 h-5 text-slate-700 mt-0.5" />
-              <div className="text-sm text-slate-700 leading-relaxed">
-                <div className="font-semibold text-slate-900">Backend-driven entitlements</div>
-                <div>
-                  Payments are not wired yet. Activating a paid plan on this page runs the same backend plan activation used for
-                  demos/testing, so the feature behavior is real and consistent.
-                </div>
-              </div>
-            </div>
-          </div>
+        
 
           {remote.loading ? (
             <div className="mt-10 text-slate-600">Loading plans…</div>
